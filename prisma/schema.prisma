@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Doctor {
+  id        String   @id @default(cuid())
+  name      String
+  specialty String   @default("Clínica General")
+  phone     String
+  bio       String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+}
+
+model Patient {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  patientName String
+  phone       String
+  reason      String
+  date        DateTime
+  timeSlot    String
+  status      AppointmentStatus @default(PENDING)
+  type        AppointmentType   @default(SINGLE)
+  amount      Int               @default(120000)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  doctorId  String?
+  doctor    Doctor?  @relation(fields: [doctorId], references: [id])
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
+  payment Payment?
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  appointmentId String        @unique
+  amount        Int
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  reference     String?
+  createdAt     DateTime      @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentType {
+  SINGLE
+  PACK
+}
+
+enum PaymentMethod {
+  TIGO_MONEY
+  PERSONAL_PAY
+  CARD
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
